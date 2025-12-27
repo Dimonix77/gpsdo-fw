@@ -290,8 +290,8 @@ static double gps_parse_coordinate(char* nmea_string, char* coord_string, size_t
     return result;
 }
 
-static char gps_letterize(int x) {
-    return (char) x + 65;
+inline static char gps_letterize(int x, char off) {
+    return (char) x + off;
 }
 
 static void gps_compute_locator(double lat, double lon) {
@@ -306,8 +306,8 @@ static void gps_compute_locator(double lat, double lon) {
             gps_locator[i*2] = (char) (lon/LON_F[i] + '0');
             gps_locator[i*2+1] = (char) (lat/LAT_F[i] + '0');
         } else {
-            gps_locator[i*2] = gps_letterize((int) (lon/LON_F[i]));
-            gps_locator[i*2+1] = gps_letterize((int) (lat/LAT_F[i]));
+            gps_locator[i*2] = gps_letterize((int) (lon/LON_F[i]), (i>=GPS_LOCATOR_SIZE/4)?'a':'A');
+            gps_locator[i*2+1] = gps_letterize((int) (lat/LAT_F[i]), (i>=GPS_LOCATOR_SIZE/4)?'a':'A');
         }
         lon = fmod(lon, LON_F[i]);
         lat = fmod(lat, LAT_F[i]);
