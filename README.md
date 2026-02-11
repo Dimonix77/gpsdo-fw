@@ -2,7 +2,7 @@
 
 This is an alternative firmware for the BH3SAP GPSDO sold on various platforms.
 
-![Image of the GPSDO running this firmware](./doc/gpsdo.jpg?raw=true)
+![Image of the GPSDO running this firmware](./doc/gpsdo.jpg)
 
 ### Usage
 
