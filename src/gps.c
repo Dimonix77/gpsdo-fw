@@ -593,7 +593,6 @@ void gps_parse(char* line)
         if(model_found && (ee_storage.gps_model != gps_model))
         {   // Save changes
             ee_storage.gps_model = gps_model;
-            EE_Write();
         }
     }
     // Store last received frame for debug purpose

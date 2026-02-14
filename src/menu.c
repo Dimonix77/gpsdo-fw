@@ -15,10 +15,9 @@
 
 /// All times in ms
 #define DEBOUNCE_TIME           50
-#define BOOT_MENU_SAVE_TIME     3*1000
 
 // Firmware version tag
-#define FIRMWARE_VERSION        "v0.1.16"
+#define FIRMWARE_VERSION        "v0.1.17"
 
 volatile uint32_t rotary_down_time      = 0;
 volatile uint32_t rotary_up_time        = 0;
@@ -74,7 +73,7 @@ void lcd_create_chars()
     }
 }
 
-typedef enum { SCREEN_MAIN, SCREEN_DATE, SCREEN_DATE_TIME, SCREEN_TREND, SCREEN_PPB, SCREEN_PWM, SCREEN_GPS, SCREEN_UPTIME, SCREEN_FRAMES, SCREEN_CONTRAST, SCREEN_PPS, SCREEN_VERSION, SCREEN_MAX } menu_screen;
+typedef enum { SCREEN_MAIN, SCREEN_DATE, SCREEN_DATE_TIME, SCREEN_TREND, SCREEN_PPB, SCREEN_PWM, SCREEN_GPS, SCREEN_UPTIME, SCREEN_FRAMES, SCREEN_CONTRAST, SCREEN_PPS, SCREEN_SAVE_CONFIG, SCREEN_SAVE_GPS_CONFIG, SCREEN_VERSION, SCREEN_MAX } menu_screen;
 typedef enum { SCREEN_TREND_MAIN, SCREEN_TREND_AUTO_V, SCREEN_TREND_AUTO_H, SCREEN_TREND_V_SCALE, SCREEN_TREND_H_SCALE, SCREEN_TREND_EXIT, SCREEN_TREND_MAX } menu_trend_screen;
 typedef enum { SCREEN_GPS_TIME, SCREEN_GPS_LATITUDE, SCREEN_GPS_LONGITUDE, SCREEN_GPS_LATITUDE_DEC, SCREEN_GPS_LONGITUDE_DEC, SCREEN_GPS_LOCATOR, SCREEN_GPS_ALTITUDE, SCREEN_GPS_GEOID, SCREEN_GPS_SATELITES, SCREEN_GPS_HDOP, SCREEN_GPS_BAUDRATE, SCREEN_GPS_TIME_OFFSET, SCREEN_GPS_DATE_FORMAT, SCREEN_GPS_MODEL, SCREEN_GPS_LAST_FRAME, SCREEN_GPS_EXIT, SCREEN_GPS_MAX } menu_gps_screen;
 typedef enum { SCREEN_PPB_MEAN, SCREEN_PPB_INST, SCREEN_PPB_FREQUENCY, SCREEN_PPB_ERROR, SCREEN_PPB_CORRECTION, SCREEN_PPB_PWM, SCREEN_PPB_OCXO_MODEL, SCREEN_PPB_WARMUP_TIME, SCREEN_PPB_ALGO, SCREEN_PPB_CORRECTION_FACTOR, SCREEN_PPB_MILLIS, SCREEN_PPB_AUTO_SAVE_PWM, SCREEN_PPB_AUTO_SYNC_PPS, SCREEN_PPB_LOCK_THRESHOLD, SCREEN_PPB_EXIT, SCREEN_PPB_MAX } menu_ppb_screen;
@@ -90,7 +89,6 @@ static menu_ppb_screen current_menu_ppb_screen = SCREEN_PPB_MEAN;
 static menu_pps_screen current_menu_pps_screen = SCREEN_PPS_SHIFT;
 static uint8_t      menu_level          = 0;
 static uint32_t     last_encoder_value  = 0;
-static uint32_t     last_menu_change    = 0;
 
 static bool         auto_save_pwm_done  = false;
 static bool         auto_sync_pps_done  = false;
@@ -224,14 +222,6 @@ void menu_set_gps_baudrate(uint32_t baudrate)
 void menu_set_correction_algorithm(correction_algo_type algo)
 {
     displayed_correction_algorithm = algo;
-}
-
-void menu_set_current_menu(uint8_t current_menu)
-{
-    if(current_menu > 0 && current_menu < SCREEN_MAX)
-    {
-        current_menu_screen = current_menu;
-    }
 }
 
 
@@ -861,6 +851,16 @@ static void menu_draw()
             }
         }
         break;
+    case SCREEN_SAVE_CONFIG:
+        //  Save configuration screen
+        LCD_Puts(1, 0, "  Save  ");
+        LCD_Puts(0, 1, " EEPROM ");
+        break;
+    case SCREEN_SAVE_GPS_CONFIG:
+        //  Save GPS module configuration screen
+        LCD_Puts(1, 0, "Save GPS");
+        LCD_Puts(0, 1, " EEPROM ");
+        break;
     case SCREEN_VERSION:
         LCD_Puts(1, 0, "Vers.:");
         LCD_Puts(0, 1, FIRMWARE_VERSION);
@@ -891,10 +891,6 @@ void menu_run()
             current_menu_screen =  (current_menu_screen + encoder_increment) % SCREEN_MAX;
             if(current_menu_screen >= SCREEN_MAX) current_menu_screen = SCREEN_MAX-1; // Roll over for first sceen - 1
             uint32_t now = HAL_GetTick();
-            if(current_menu_screen != previous_menu_screen)
-            {
-                last_menu_change = now;
-            }
             // Reset counter for date/time screen
             last_hour_date_screen_update = now;
             LCD_Clear();
@@ -914,6 +910,8 @@ void menu_run()
                     }
                     break;
                 case SCREEN_PWM:
+                case SCREEN_SAVE_CONFIG:
+                case SCREEN_SAVE_GPS_CONFIG:
                     // Go back to main menu
                     LCD_Clear();
                     menu_force_redraw();
@@ -1221,6 +1219,8 @@ void menu_run()
                 case SCREEN_PWM:
                 case SCREEN_CONTRAST:
                 case SCREEN_PPS:
+                case SCREEN_SAVE_CONFIG:
+                case SCREEN_SAVE_GPS_CONFIG:
                     menu_level = 1;
                     LCD_Clear();
                     break;
@@ -1256,14 +1256,12 @@ void menu_run()
                     break;
                 case SCREEN_PWM:
                     ee_storage.pwm = TIM1->CCR2;
-                    EE_Write();
                     menu_level = 0;
                     break;
                 case SCREEN_CONTRAST:
                     if(ee_storage.contrast != contrast)
                     {   // Contrast has changed => save it to eeprom
                         ee_storage.contrast = contrast;
-                        EE_Write();
                     }
                     menu_level = 0;
                     break;
@@ -1327,6 +1325,14 @@ void menu_run()
                             break;
                     }
                     break;
+                case SCREEN_SAVE_CONFIG:
+                    EE_Write();
+                    menu_level = 0;
+                    break;
+                case SCREEN_SAVE_GPS_CONFIG:
+                    gps_save_config();
+                    menu_level = 0;
+                    break;
                 default:
                     menu_level = 0;
                     break;
@@ -1339,28 +1345,24 @@ void menu_run()
                     if(ee_storage.trend_auto_v != trend_auto_v)
                     {   // Save changes
                         ee_storage.trend_auto_v = trend_auto_v;
-                        EE_Write();
                     }
                     break;
                 case SCREEN_TREND_AUTO_H:
                     if(ee_storage.trend_auto_h != trend_auto_h)
                     {   // Save changes
                         ee_storage.trend_auto_h = trend_auto_h;
-                        EE_Write();
                     }
                     break;
                 case SCREEN_TREND_V_SCALE:
                     if(ee_storage.trend_v_scale != trend_v_scale)
                     {   // Save changes
                         ee_storage.trend_v_scale = trend_v_scale;
-                        EE_Write();
                     }
                     break;
                 case SCREEN_TREND_H_SCALE:
                     if(ee_storage.trend_h_scale != trend_h_scale)
                     {   // Save changes
                         ee_storage.trend_h_scale = trend_h_scale;
-                        EE_Write();
                     }
                     break;
                 default:
@@ -1378,14 +1380,12 @@ void menu_run()
                         // Alsa change warmup time accordingly
                         warmup_time_seconds = get_default_warmup_time(ocxo_model);
                         ee_storage.warmup_time_seconds = warmup_time_seconds;
-                        EE_Write();
                     }
                     break;
                 case SCREEN_PPB_WARMUP_TIME:
                     if(ee_storage.warmup_time_seconds != warmup_time_seconds)
                     {   // Save changes
                         ee_storage.warmup_time_seconds = warmup_time_seconds;
-                        EE_Write();
                     }
                     break;
                 case SCREEN_PPB_ALGO:
@@ -1397,35 +1397,30 @@ void menu_run()
                         // Save changes
                         ee_storage.correction_algorithm = correction_algorithm;
                         ee_storage.correction_factor = correction_factor;
-                        EE_Write();
                     }
                     break;
                 case SCREEN_PPB_CORRECTION_FACTOR:
                     if(ee_storage.correction_factor != correction_factor)
                     {   // Save changes
                         ee_storage.correction_factor = correction_factor;
-                        EE_Write();
                     }
                     break;
                 case SCREEN_PPB_AUTO_SAVE_PWM:
                     if(ee_storage.pwm_auto_save != pwm_auto_save)
                     {   // Save changes
                         ee_storage.pwm_auto_save = pwm_auto_save;
-                        EE_Write();
                     }
                     break;
                 case SCREEN_PPB_AUTO_SYNC_PPS:
                     if(ee_storage.pps_ppm_auto_sync != pps_ppm_auto_sync)
                     {   // Save changes
                         ee_storage.pps_ppm_auto_sync = pps_ppm_auto_sync;
-                        EE_Write();
                     }
                     break;
                 case SCREEN_PPB_LOCK_THRESHOLD:
                     if(ee_storage.ppb_lock_threshold != ppb_lock_threshold)
                     {   // Save changes
                         ee_storage.ppb_lock_threshold = ppb_lock_threshold;
-                        EE_Write();
                     }
                     break;
                 default:
@@ -1440,13 +1435,10 @@ void menu_run()
                     if(ee_storage.gps_baudrate != gps_baudrate)
                     {   // Save changes
                         ee_storage.gps_baudrate = gps_baudrate;
-                        EE_Write();
                         // Reconfigure uart
                         if(gps_configure_module_uart(gps_baudrate)>=0)
                         {   // Reconfigure uart
                             gps_reconfigure_uart(gps_baudrate);
-                            // Save new baudrate on gps module
-                            gps_save_config();
                         }
                     }
                     break;
@@ -1454,21 +1446,18 @@ void menu_run()
                     if(ee_storage.gps_time_offset != ((uint32_t)(gps_time_offset-MIN_TIME_OFFSET)))
                     {   // Save changes
                         ee_storage.gps_time_offset = gps_time_offset-MIN_TIME_OFFSET;
-                        EE_Write();
                     }
                     break;
                 case SCREEN_GPS_DATE_FORMAT:
                     if(ee_storage.gps_date_format != gps_date_format)
                     {   // Save changes
                         ee_storage.gps_date_format = gps_date_format;
-                        EE_Write();
                     }
                     break;
                 case SCREEN_GPS_MODEL:
                     if(ee_storage.gps_model != gps_model)
                     {   // Save changes
                         ee_storage.gps_model = gps_model;
-                        EE_Write();
                     }
                     break;
                 default:
@@ -1483,21 +1472,18 @@ void menu_run()
                     if(ee_storage.pps_sync_on != pps_sync_on)
                     {   // Save changes
                         ee_storage.pps_sync_on = pps_sync_on;
-                        EE_Write();
                     }
                     break;
                 case SCREEN_PPS_SYNC_DELAY:
                     if(ee_storage.pps_sync_delay != pps_sync_delay)
                     {   // Save changes
                         ee_storage.pps_sync_delay = pps_sync_delay;
-                        EE_Write();
                     }
                     break;
                 case SCREEN_PPS_SYNC_THRESHOLD:
                     if(ee_storage.pps_sync_threshold != pps_sync_threshold)
                     {   // Save changes
                         ee_storage.pps_sync_threshold = pps_sync_threshold;
-                        EE_Write();
                     }
                     break;
                 default:
@@ -1552,8 +1538,12 @@ void menu_run()
         }
 
         if (menu_level > 0 && current_menu_screen == SCREEN_PWM) {
-            LCD_Puts(0, 0, " PRESS ");
-            LCD_Puts(0, 1, "TO SAVE");
+            LCD_Puts(0, 0, " PRESS  ");
+            LCD_Puts(0, 1, " TO SET ");
+        } else if (menu_level > 0 && (current_menu_screen == SCREEN_SAVE_CONFIG ||
+                                      current_menu_screen == SCREEN_SAVE_GPS_CONFIG)) {
+            LCD_Puts(0, 0, " PRESS  ");
+            LCD_Puts(0, 1, "TO SAVE ");
         } else {
             menu_draw();
         }
@@ -1567,7 +1557,6 @@ void menu_run()
             if(pwm_auto_save && !auto_save_pwm_done)
             {
                 ee_storage.pwm = TIM1->CCR2;
-                EE_Write();
                 // Only auto-save once per session
                 auto_save_pwm_done = true;
                 did_pwm = true;
@@ -1582,17 +1571,17 @@ void menu_run()
             if(did_pps && did_pwm)
             {
                 LCD_Puts(0, 0, "PPS&PWM ");
-                LCD_Puts(0, 1, " DONE ! ");
+                LCD_Puts(0, 1, " DONE!  ");
             }
             else if(did_pps)
             {
-                LCD_Puts(0, 0, "  PPS  ");
-                LCD_Puts(0, 1, "SYNCED!");
+                LCD_Puts(0, 0, "  PPS   ");
+                LCD_Puts(0, 1, "SYNCED! ");
             }
             else if(did_pwm)
             {
-                LCD_Puts(0, 0, "  PWM  ");
-                LCD_Puts(0, 1, "SAVED !");
+                LCD_Puts(0, 0, "  PWM   ");
+                LCD_Puts(0, 1, "  SET!  ");
             }
         }
         bool new_ppb_lock_status = frequency_is_stable(ppb_lock_threshold);
@@ -1604,28 +1593,6 @@ void menu_run()
             {
                 lcd_create_chars();
             }
-        }
-
-        // Check if boot menu has to be changed
-        if(last_menu_change != 0 && ((HAL_GetTick() - last_menu_change) > BOOT_MENU_SAVE_TIME))
-        {   // Filter on eligible boot screens
-            switch (current_menu_screen)
-            {
-                case SCREEN_MAIN:
-                case SCREEN_DATE:
-                case SCREEN_DATE_TIME:
-                case SCREEN_TREND:
-                    if(ee_storage.boot_menu != current_menu_screen)
-                    {
-                        ee_storage.boot_menu = current_menu_screen;
-                        EE_Write();
-                    }
-                    break;
-                
-                default:
-                    break;
-            }
-            last_menu_change = 0;
         }
     }
 }

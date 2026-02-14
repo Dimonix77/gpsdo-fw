@@ -1,3 +1,5 @@
+This is a modified version of [Fredzo's GPSDO firmware](https://github.com/fredzo/gpsdo-fw/) that minimizes MCU flash writes. In this firmware, settings are written to the microcontroller's flash memory only when the user manually selects this action via the device menu.
+
 ## Alternative firmware for the BH3SAP GPSDO
 
 This is an alternative firmware for the BH3SAP GPSDO sold on various platforms.
@@ -6,11 +8,11 @@ This is an alternative firmware for the BH3SAP GPSDO sold on various platforms.
 
 ### Usage
 
-Power on the device with GPS antenna connected. Wait a long while for the PPB to reach close to zero. When the PPB is stabilized close to zero, the GPSDO is considered locked (padlock icon) and it will automatically save the current PWM value in flash.
+Power on the device with GPS antenna connected. Wait a long while for the PPB to reach close to zero. When the PPB is stabilized close to zero, the GPSDO is considered locked (padlock icon) and it will automatically apply the current PWM value to the settings. To store it permanently in flash, use the `Save EEPROM` menu option.
 
 This PWM value will then be used on the next boot as a startup value.
 
-The current PWM value can also be manually saved by going to `PWM` menu and press the encoder twice (a message will be shown after the first press).
+The current PWM value can also be manually applied to the settings by going to `PWM` menu and press the encoder twice (a message will be shown after the first press).
 
 
 The [original manual](./doc/gpsdo-documentation.pdf) for the device talks about running the device without a GPS antenna after calibration, but I would advice against that since the oscillator seems sensitive to both ambient temperature, vibrations and orientation. Best results will be had when the GPS antenna is connected at all times.
@@ -47,11 +49,11 @@ Here is the menu tree :
       - For `Eric-H` algorithm, the default correction factor is 300, increasing it will slow down the PWM adjustment
       - For `Dankar` and `Fredzo` algorithms, the default correction factor is 10, a value bellow 10 will slow down PWM adjustment and a value above 10 will speed it up
   - `Millis`: the gap in milliseconds between GPS PPS reference and MCU calculated PPS (should be 0)
-  - `PWM auto save`: press to set the PWM auto-save status (when set to `ON`, PWM value will automatically be saved the first time PPB mean value reaches 0)
+  - `PWM auto set`: press to set the PWM auto-set status (when set to `ON`, PWM value will be applied to the settings the first time PPB mean value reaches 0)
   - `PPS auto resync`: press to set the PWM auto-sync status (when set to `ON`, MCU Controlled PPS output will automatically be resynced to GPS PPS Output the first time PPB mean value reaches 0)
   - `PPB Lock Threshold`: press to set the PPB threshold value above which GPSDO is considered locked
   - `Exit`: press to exit the PPB sub-menu
-- `PWM Screen`: the current PWM value, press the encoder twice to save this value to flash memory
+- `PWM Screen`: the current PWM value, press the encoder twice to apply this value to the settings
 - `GPS Menu`: displays the number of detected satellites and the current GPS time
   - `Time`: the current GPS time
   - `Latitude`: the GPS detected latitude (format: ddmm(.)mmmm)
@@ -81,6 +83,8 @@ Here is the menu tree :
   - `Threshold`: press to set the MCU PPS output synchronisation threshold (in clock cycles)
   - `Force Sync`: press to force the MCU Controlled PPS output to be synched with the GPS PPS output
   - `Exit`: press to exit the PPS sub-menu
+- `Save EEPROM`: press the encoder twice to store the current settings permanently in flash
+- `Save GPS EEPROM`: press the encoder twice to save the GPS module's settings in its flash memory (works with GPSDOs equipped with ATGM336H GPS modules)
 - `Version Screen` : shows the current firmware version
 
 #### Main screen
@@ -90,7 +94,7 @@ Bottom line is the current UTC time from GPS module.
 
 #### Trend screen
 ![Trend Screen](./doc/trend-screen.jpg)
-The top left corner of the `Trend Scren` contains an indicator for PPS pulses (using default characters from the LCD driver, custom characters beeing used for graphical trend display).
+The top left corner of the `Trend Scren` contains an indicator for PPS pulses (using default characters from the LCD driver, custom characters being used for graphical trend display).
 Next to that is the current number of satellites used by the GPS module. To the right of that is the current measured PPB error.
 Bottom line is a graphical representation of the PPB trend over time.
 
@@ -98,7 +102,7 @@ Trend menu gives access to trend navigation, and scale settings:
 ![Trend Menu](./doc/trend-menu.png)
 
 #### Boot Screen
-After boot, the GPSDO will automatically display the last used screen between `Main Screen`, `Date Screen`, `Date Time Screen` and `Trend Screen`.
+After boot, the GPSDO will display the `Main Screen`.
 
 #### GPSDO Lock
 GPSDO is considered locked when the mean PPB value (running average over 128 seconds) is above the `PPB Lock Threshold` setting in `PPB` menu.
@@ -215,7 +219,7 @@ The displayed PPB error is a long running average. It counts the number of clock
 
 #### Linux / OSX
 
-Clone the repo, update submodules and do the cmake. (Or just download a release) You should not need any other dependencies than arm-none-eabi-gcc. The bluepill can be flashed in multiple ways, check the documentation for it for information. Included is a openocd configuration for connecting to the device via SWD using a JLink adapter.
+Clone the repo, update submodules and do the cmake (Or just download a release). You should not need any other dependencies than arm-none-eabi-gcc. The bluepill can be flashed in multiple ways, check the documentation for it for information. Included is a openocd configuration for connecting to the device via SWD using a JLink adapter.
 
 #### Windows
 
