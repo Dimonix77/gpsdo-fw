@@ -853,13 +853,13 @@ static void menu_draw()
         break;
     case SCREEN_SAVE_CONFIG:
         //  Save configuration screen
-        LCD_Puts(1, 0, "  Save  ");
+        LCD_Puts(1, 0,  " Save  ");
         LCD_Puts(0, 1, " EEPROM ");
         break;
     case SCREEN_SAVE_GPS_CONFIG:
         //  Save GPS module configuration screen
-        LCD_Puts(1, 0, "Save GPS");
-        LCD_Puts(0, 1, " EEPROM ");
+        LCD_Puts(1, 0,  " Save  ");
+        LCD_Puts(0, 1, " GPS EE ");
         break;
     case SCREEN_VERSION:
         LCD_Puts(1, 0, "Vers.:");
