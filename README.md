@@ -2,7 +2,7 @@ This is a modified version of [Fredzo's GPSDO firmware](https://github.com/fredz
 
 ## Alternative firmware for the BH3SAP GPSDO
 
-This is an alternative firmware for the BH3SAP GPSDO sold on various platforms.
+This is an alternative firmware for the BH3SAP GPSDO sold on various platforms forked from [fredzo's version](https://github.com/fredzo/gpsdo-fw) with some [experimental features](https://github.com/ksjh/gpsdo-fw/wiki/Experimental-gpsdo%E2%80%90fw).
 
 ![Image of the GPSDO running this firmware](./doc/gpsdo.jpg)
 
