@@ -84,7 +84,6 @@ Here is the menu tree :
   - `Force Sync`: press to force the MCU Controlled PPS output to be synched with the GPS PPS output
   - `Exit`: press to exit the PPS sub-menu
 - `Save EEPROM`: press the encoder twice to store the current settings permanently in flash
-- `Save GPS EE`: press the encoder twice to save the GPS module's settings in its flash memory (works with GPSDOs equipped with ATGM336H GPS modules)
 - `Version Screen` : shows the current firmware version
 
 #### Main screen
