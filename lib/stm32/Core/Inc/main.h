@@ -57,6 +57,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define LED1_Pin GPIO_PIN_13
+#define LED1_GPIO_Port GPIOC
+#define GPS_LOCK_OUTPUT_Pin GPIO_PIN_0
+#define GPS_LOCK_OUTPUT_GPIO_Port GPIOA
+#define PPB_LOCK_OUTPUT_Pin GPIO_PIN_1
+#define PPB_LOCK_OUTPUT_GPIO_Port GPIOA
 #define GPS_EXT_TX_Pin GPIO_PIN_2
 #define GPS_EXT_TX_GPIO_Port GPIOA
 #define GPS_EXT_RX_Pin GPIO_PIN_3
@@ -68,20 +74,14 @@ void Error_Handler(void);
 #define ROTARY_A_GPIO_Port GPIOA
 #define ROTARY_B_Pin GPIO_PIN_7
 #define ROTARY_B_GPIO_Port GPIOA
+#define PPS_OUTPUT_Pin GPIO_PIN_1
+#define PPS_OUTPUT_GPIO_Port GPIOB
 #define GPS_TX_Pin GPIO_PIN_10
 #define GPS_TX_GPIO_Port GPIOB
 #define GPS_RX_Pin GPIO_PIN_11
 #define GPS_RX_GPIO_Port GPIOB
-#define LED1_Pin GPIO_PIN_13
-#define LED1_GPIO_Port GPIOC
 #define PPS_Pin GPIO_PIN_8
 #define PPS_GPIO_Port GPIOA
-#define PPS_OUTPUT_Pin GPIO_PIN_1
-#define PPS_OUTPUT_GPIO_Port GPIOB
-#define GPS_LOCK_OUTPUT_Pin GPIO_PIN_0
-#define GPS_LOCK_OUTPUT_GPIO_Port GPIOA
-#define PPB_LOCK_OUTPUT_Pin GPIO_PIN_1
-#define PPB_LOCK_OUTPUT_GPIO_Port GPIOA
 #define VCO_CONTROL_Pin GPIO_PIN_9
 #define VCO_CONTROL_GPIO_Port GPIOA
 #define LCD_CONTRAST_Pin GPIO_PIN_10

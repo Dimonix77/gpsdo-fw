@@ -204,31 +204,6 @@ void gps_reconfigure_uart(uint32_t baudrate)
     gps_start_comm_rx();
 }
 
-void gps_save_config()
-{
-    const char* save_command = NULL;
-    switch(gps_model)
-    {
-        case GPS_MODEL_ATGM336H:
-            // Give some time for the module to reconfigure before sending the save command
-            HAL_Delay(50);
-            save_command = atgm336h_savecommand;
-            break;
-        case GPS_MODEL_NEO6M:
-            // TODO
-        case GPS_MODEL_NEOM9N:
-            // TODO
-        case GPS_MODEL_UNKNOWN:
-            break;
-    }
-
-    size_t len;
-    if (save_command != NULL) {
-        len = strlen(save_command);
-        gps_sendcommand(save_command, len);
-    }
-}
-
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
 {
     if (huart == &huart3) {

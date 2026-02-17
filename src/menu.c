@@ -73,7 +73,7 @@ void lcd_create_chars()
     }
 }
 
-typedef enum { SCREEN_MAIN, SCREEN_DATE, SCREEN_DATE_TIME, SCREEN_TREND, SCREEN_PPB, SCREEN_PWM, SCREEN_GPS, SCREEN_UPTIME, SCREEN_FRAMES, SCREEN_CONTRAST, SCREEN_PPS, SCREEN_SAVE_CONFIG, SCREEN_SAVE_GPS_CONFIG, SCREEN_VERSION, SCREEN_MAX } menu_screen;
+typedef enum { SCREEN_MAIN, SCREEN_DATE, SCREEN_DATE_TIME, SCREEN_TREND, SCREEN_PPB, SCREEN_PWM, SCREEN_GPS, SCREEN_UPTIME, SCREEN_FRAMES, SCREEN_CONTRAST, SCREEN_PPS, SCREEN_SAVE_CONFIG, SCREEN_VERSION, SCREEN_MAX } menu_screen;
 typedef enum { SCREEN_TREND_MAIN, SCREEN_TREND_AUTO_V, SCREEN_TREND_AUTO_H, SCREEN_TREND_V_SCALE, SCREEN_TREND_H_SCALE, SCREEN_TREND_EXIT, SCREEN_TREND_MAX } menu_trend_screen;
 typedef enum { SCREEN_GPS_TIME, SCREEN_GPS_LATITUDE, SCREEN_GPS_LONGITUDE, SCREEN_GPS_LATITUDE_DEC, SCREEN_GPS_LONGITUDE_DEC, SCREEN_GPS_LOCATOR, SCREEN_GPS_ALTITUDE, SCREEN_GPS_GEOID, SCREEN_GPS_SATELITES, SCREEN_GPS_HDOP, SCREEN_GPS_BAUDRATE, SCREEN_GPS_TIME_OFFSET, SCREEN_GPS_DATE_FORMAT, SCREEN_GPS_MODEL, SCREEN_GPS_LAST_FRAME, SCREEN_GPS_EXIT, SCREEN_GPS_MAX } menu_gps_screen;
 typedef enum { SCREEN_PPB_MEAN, SCREEN_PPB_INST, SCREEN_PPB_FREQUENCY, SCREEN_PPB_ERROR, SCREEN_PPB_CORRECTION, SCREEN_PPB_PWM, SCREEN_PPB_OCXO_MODEL, SCREEN_PPB_WARMUP_TIME, SCREEN_PPB_ALGO, SCREEN_PPB_CORRECTION_FACTOR, SCREEN_PPB_MILLIS, SCREEN_PPB_AUTO_SAVE_PWM, SCREEN_PPB_AUTO_SYNC_PPS, SCREEN_PPB_LOCK_THRESHOLD, SCREEN_PPB_EXIT, SCREEN_PPB_MAX } menu_ppb_screen;
@@ -856,11 +856,6 @@ static void menu_draw()
         LCD_Puts(1, 0,  " Save  ");
         LCD_Puts(0, 1, " EEPROM ");
         break;
-    case SCREEN_SAVE_GPS_CONFIG:
-        //  Save GPS module configuration screen
-        LCD_Puts(1, 0,  " Save  ");
-        LCD_Puts(0, 1, " GPS EE ");
-        break;
     case SCREEN_VERSION:
         LCD_Puts(1, 0, "Vers.:");
         LCD_Puts(0, 1, FIRMWARE_VERSION);
@@ -911,7 +906,6 @@ void menu_run()
                     break;
                 case SCREEN_PWM:
                 case SCREEN_SAVE_CONFIG:
-                case SCREEN_SAVE_GPS_CONFIG:
                     // Go back to main menu
                     LCD_Clear();
                     menu_force_redraw();
@@ -1220,7 +1214,6 @@ void menu_run()
                 case SCREEN_CONTRAST:
                 case SCREEN_PPS:
                 case SCREEN_SAVE_CONFIG:
-                case SCREEN_SAVE_GPS_CONFIG:
                     menu_level = 1;
                     LCD_Clear();
                     break;
@@ -1327,10 +1320,6 @@ void menu_run()
                     break;
                 case SCREEN_SAVE_CONFIG:
                     EE_Write();
-                    menu_level = 0;
-                    break;
-                case SCREEN_SAVE_GPS_CONFIG:
-                    gps_save_config();
                     menu_level = 0;
                     break;
                 default:
@@ -1537,14 +1526,18 @@ void menu_run()
             update_trend = false;
         }
 
-        if (menu_level > 0 && current_menu_screen == SCREEN_PWM) {
+        if (menu_level > 0 && current_menu_screen == SCREEN_PWM)
+        {
             LCD_Puts(0, 0, " PRESS  ");
             LCD_Puts(0, 1, " TO SET ");
-        } else if (menu_level > 0 && (current_menu_screen == SCREEN_SAVE_CONFIG ||
-                                      current_menu_screen == SCREEN_SAVE_GPS_CONFIG)) {
+        }
+        else if (menu_level > 0 && (current_menu_screen == SCREEN_SAVE_CONFIG))
+        {
             LCD_Puts(0, 0, " PRESS  ");
             LCD_Puts(0, 1, "TO SAVE ");
-        } else {
+        }
+        else
+        {
             menu_draw();
         }
 
