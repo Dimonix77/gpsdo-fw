@@ -33,12 +33,12 @@ void gpsdo(void)
         switch(ocxo_model)
         {
             case OCXO_MODEL_OX256B:
-                startingPwm = 54000;
+                startingPwm = 36000;
                 break;
             case OCXO_MODEL_ISOTEMP:
             case OCXO_MODEL_UNKNOWN:
             default:
-                startingPwm = 38000;
+                startingPwm = 25000;
                 break;   
         }
     }
